@@ -60,9 +60,26 @@ export default function Episode({ episode }: EpisodeProps ) {
     )
 }
 
+/**
+ * When Path is empty at the build time, the next does not episode in a static way
+ * fallback: false -> if not generated from the 404 build
+ * fallback: true -> load on the client side
+ * fallback: blocking -> load the nodejs side
+ */
 export const getStaticPaths: GetStaticPaths = async () => {
+    const { data } = await api(
+        '/episodes',
+        { params: { _limit: 2, _sort: 'published_at', _order: 'desc' } }
+    )
+
+    const paths = data.map(episode => {
+        return {
+            params: { slug: episode.id }
+        }
+    })
+
     return {
-        paths: [],
+        paths,
         fallback: 'blocking'
     }
 }
