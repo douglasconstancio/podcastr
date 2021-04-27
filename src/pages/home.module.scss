@@ -9,6 +9,15 @@
     }
 }
 
+@media (max-width: 1220px) {
+    .latestEpisodes {
+        ul {
+            grid-template-columns: 1fr;
+            grid-template-rows: repeat(2, 1fr);
+        }
+    }
+}
+
 .latestEpisodes {
     ul {
         list-style: none;
@@ -33,6 +42,7 @@
             }
 
             .episodeDetails {
+                width: 1%;
                 flex: 1;
                 margin-left: 1rem;
 
