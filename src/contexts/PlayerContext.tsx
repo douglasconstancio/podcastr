@@ -1,4 +1,4 @@
-import { createContext, useState, ReactNode } from 'react'
+import { createContext, useState, ReactNode, useContext } from 'react'
 
 type Episode = {
     title: string
@@ -9,11 +9,16 @@ type Episode = {
 }
 
 type PlayerContextData = {
-    episodeList: Array<Episode>,
-    currentEpisodeIndex: number,
-    isPlaying: boolean,
+    episodeList: Array<Episode>
+    currentEpisodeIndex: number
+    isPlaying: boolean
+    hasNext: boolean
+    hasPrevious: boolean
     togglePlay: () => void
+    playNext: () => void
+    playPrevious: () => void
     play: (episode: Episode) => void
+    playList: (list: Episode[], index: number) => void
     setPlayingState: (state: boolean) => void
 }
 
@@ -28,18 +33,41 @@ export function PlayerContextProvider({ children }: PlayerContextProviderProps) 
     const [currentEpisodeIndex, setCurrentEpisodeIndex] = useState(0)
     const [isPlaying, setIsPlaying] = useState(false)
 
-    function togglePlay() {
-        setIsPlaying(!isPlaying)
-    }
-
     function play(episode: Episode) {
         setEpisodeList([ episode ])
         setCurrentEpisodeIndex(0)
         setIsPlaying(true)
     }
 
+    function playList(list: Episode[], index: number) {
+        setEpisodeList(list)
+        setCurrentEpisodeIndex(index)
+        setIsPlaying(true)
+    }
+
+    function togglePlay() {
+        setIsPlaying(!isPlaying)
+    }
+
     function setPlayingState(state: boolean) {
-        setIsPlaying(state);
+        setIsPlaying(state)
+    }
+
+    const hasPrevious = currentEpisodeIndex > 0
+    const hasNext = (currentEpisodeIndex + 1) < episodeList.length
+
+    function playNext() {
+        const nextEpisodeIndex = currentEpisodeIndex + 1
+
+        if (hasNext) {
+            setCurrentEpisodeIndex(nextEpisodeIndex)
+        }
+    }
+
+    function playPrevious() {
+        if (hasPrevious) {
+            setCurrentEpisodeIndex(currentEpisodeIndex - 1)
+        }
     }
 
     return (
@@ -48,11 +76,20 @@ export function PlayerContextProvider({ children }: PlayerContextProviderProps) 
                 episodeList,
                 currentEpisodeIndex,
                 isPlaying,
+                hasNext,
+                hasPrevious,
                 togglePlay,
                 setPlayingState,
-                play
+                play,
+                playList,
+                playNext,
+                playPrevious
             } }>
             { children }
         </PlayerContext.Provider>
     )
+}
+
+export const usePlayer = () => {
+    return useContext(PlayerContext)
 }
