@@ -1,4 +1,4 @@
-import { createContext, useState, ReactNode, useContext } from 'react'
+import { createContext, ReactNode, useContext, useState } from 'react'
 
 type Episode = {
     title: string
@@ -9,22 +9,24 @@ type Episode = {
 }
 
 type PlayerContextData = {
-    episodeList: Array<Episode>
+    episodeList: Episode[]
     currentEpisodeIndex: number
     isPlaying: boolean
-    hasNext: boolean
-    hasPrevious: boolean
     isLooping: boolean
     isShuffling: boolean
+    isMenuVisible: boolean
+    play: (episode: Episode) => void
+    playList: (list: Episode[], index: number) => void
+    setPlayingState: (state: boolean) => void
     togglePlay: () => void
     toggleLoop: () => void
     toggleShuffle: () => void
     playNext: () => void
     playPrevious: () => void
     clearPlayerState: () => void
-    play: (episode: Episode) => void
-    playList: (list: Episode[], index: number) => void
-    setPlayingState: (state: boolean) => void
+    setIsMenuVisible: (boolean) => void
+    hasNext: boolean
+    hasPrevious: boolean
 }
 
 export const PlayerContext = createContext({} as PlayerContextData)
@@ -40,16 +42,20 @@ export function PlayerContextProvider({ children }: PlayerContextProviderProps) 
     const [isLooping, setIsLooping] = useState(false)
     const [isShuffling, setIsShuffling] = useState(false)
 
+    const [isMenuVisible, setIsMenuVisible] = useState (false)
+
     function play(episode: Episode) {
         setEpisodeList([ episode ])
         setCurrentEpisodeIndex(0)
         setIsPlaying(true)
+        setIsMenuVisible(true)
     }
 
     function playList(list: Episode[], index: number) {
         setEpisodeList(list)
         setCurrentEpisodeIndex(index)
         setIsPlaying(true)
+        setIsMenuVisible(true)
     }
 
     function togglePlay() {
@@ -94,24 +100,26 @@ export function PlayerContextProvider({ children }: PlayerContextProviderProps) 
 
     return (
         <PlayerContext.Provider
-            value={ {
+            value={{
                 episodeList,
                 currentEpisodeIndex,
-                isPlaying,
-                hasNext,
-                hasPrevious,
-                isLooping,
-                isShuffling,
-                togglePlay,
-                setPlayingState,
                 play,
-                playList,
-                playNext,
-                playPrevious,
-                toggleLoop,
-                toggleShuffle,
-                clearPlayerState
-            } }>
+                isPlaying,
+                    playList,
+                    playNext,
+                    playPrevious,
+                    togglePlay,
+                    setPlayingState,
+                    hasNext,
+                    isLooping,
+                    toggleLoop,
+                    hasPrevious,
+                    toggleShuffle,
+                    clearPlayerState,
+                    isMenuVisible,
+                    setIsMenuVisible,
+                    isShuffling
+                } }>
             { children }
         </PlayerContext.Provider>
     )

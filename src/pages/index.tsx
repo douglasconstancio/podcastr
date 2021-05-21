@@ -1,16 +1,18 @@
-import { GetServerSideProps } from 'next'
+import { GetStaticProps } from 'next'
+import { api } from '../services/api'
+import { format, parseISO } from 'date-fns'
+import ptBR from 'date-fns/locale/pt-BR'
+import { secondsToTimeString } from '../utils/secondsToTimeString'
 import Image from 'next/image'
 import Link from 'next/link'
 import Head from 'next/head'
 
-import { format, parseISO } from 'date-fns'
-import ptBR from 'date-fns/locale/pt-BR'
-
-import { api } from '../services/api'
-import { secondsToTimeString } from '../utils/secondsToTimeString'
 import { usePlayer } from '../contexts/PlayerContext'
+import { Container } from '../styles/home-styles'
 
-import styles from './home.module.scss'
+import { BsFillPlayFill } from 'react-icons/bs'
+import { useContext } from 'react'
+import { ThemeContext } from 'styled-components'
 
 type Episode = {
     id: string
@@ -31,13 +33,14 @@ type HomeProps = {
 export default function Home({ latestEpisodes, allEpisodes }: HomeProps) {
     const { playList } = usePlayer()
     const episodeList = [...latestEpisodes, ...allEpisodes]
+    const { colors, title } = useContext(ThemeContext)
 
     return (
-        <div className={styles.homepage}>
+        <Container>
             <Head>
                 <title>Home | Podcastr</title>
             </Head>
-            <section className={styles.latestEpisodes}>
+            <section className='lastedEpisodes'>
                 <h2>Últimos lançamentos</h2>
                 <ul>
                     { latestEpisodes.map((episode, index) => (
@@ -49,12 +52,13 @@ export default function Home({ latestEpisodes, allEpisodes }: HomeProps) {
                                 alt={ episode.title }
                                 objectFit='cover'
                             />
-
-                            <div className={ styles.episodeDetails }>
-                                <Link href={ `/episodes/${episode.id}` } passHref>
+                            <div className='episodeDetails'>
+                                <Link href={ `/episodes/${episode.id}` }>
                                     <a>{ episode.title }</a>
                                 </Link>
-                                <p>{ episode.members }</p>
+                                <p className={ title === 'dark' ? 'isDark' : ''}>
+                                    { episode.members }
+                                </p>
                                 <span>{ episode.publishedAt }</span>
                                 <span>{ episode.durationAsString }</span>
                             </div>
@@ -62,14 +66,17 @@ export default function Home({ latestEpisodes, allEpisodes }: HomeProps) {
                             <button
                                 type='button'
                                 onClick={ () => playList(episodeList, index) }>
-                                <img src='/play-green.svg' alt='Tocar episódio'/>
+                                <BsFillPlayFill
+                                    color={ colors.buttoninside }
+                                    size={ 20 }
+                                    title='Tocar episódio' />
                             </button>
                         </li>
                     ))}
                 </ul>
             </section>
 
-            <section className={styles.allEpisodes}>
+            <section className='allEpisodes'>
                 <h2>Todos episódios</h2>
                 <table cellSpacing={0}>
                     <thead>
@@ -82,7 +89,6 @@ export default function Home({ latestEpisodes, allEpisodes }: HomeProps) {
                             <th></th>
                         </tr>
                     </thead>
-
                     <tbody>
                         { allEpisodes.map((episode, index) => (
                             <tr key={ episode.id }>
@@ -96,15 +102,13 @@ export default function Home({ latestEpisodes, allEpisodes }: HomeProps) {
                                     />
                                 </td>
                                 <td>
-                                    <Link
-                                        passHref
-                                        href={`/episodes/${episode.id}`}>
-                                        <a href={`/episodes/${episode.id}`}>
-                                            { episode.title }
-                                        </a>
+                                    <Link href={ `/episodes/${episode.id}` }>
+                                        <a>{ episode.title }</a>
                                     </Link>
                                 </td>
-                                <td>{ episode.members }</td>
+                                <td className={ title === 'dark' ? 'isDark' : '' }>
+                                    { episode.members }
+                                </td>
                                 <td style={{ width: 100 }}>
                                     { episode.publishedAt }
                                 </td>
@@ -112,23 +116,58 @@ export default function Home({ latestEpisodes, allEpisodes }: HomeProps) {
                                 <td>
                                     <button
                                         type='button'
-                                        onClick={() => playList(
+                                        onClick={ () => playList(
                                             episodeList,
                                             index + latestEpisodes.length
                                         )}>
-                                        <img src='/play-green.svg' alt='Tocar episódio' />
+                                        <BsFillPlayFill
+                                            color={ colors.buttoninside }
+                                            size={ 17 }
+                                            title='Tocar episódio' />
                                     </button>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
+                <ul className='responsiveEpisodes'>
+                    { allEpisodes.map((episode, index) => (
+                        <li key={ episode.id }>
+                            <Image
+                                width={192}
+                                height={192}
+                                src={episode.thumbnail}
+                                alt={episode.title}
+                                objectFit='cover'
+                                className='image'
+                            />
+                            <div className='episodeDetails'>
+                                <Link href={`/episodes/${episode.id}`}>
+                                    <a>{ episode.title }</a>
+                                </Link>
+                                <p className={ title === 'dark' ? 'isDark' : '' }>
+                                    { episode.members }
+                                </p>
+                                <span>{ episode.publishedAt }</span>
+                                <span>{ episode.durationAsString }</span>
+                            </div>
+                            <button
+                                type='button'
+                                onClick={() => playList(episodeList, index)}>
+                            <BsFillPlayFill
+                                color={ colors.buttoninside }
+                                size={ 20 }
+                                title='Tocar episódio' />
+                            </button>
+                        </li>
+                    ))}
+                </ul>
             </section>
-        </div>
+        </Container>
     )
 }
 
-export const getStaticProps: GetServerSideProps = async () => {
+export const getStaticProps: GetStaticProps = async () => {
     const { data } = await api(
         '/episodes',
         { params: { _limit: 12, _sort: 'published_at', _order: 'desc' } }
@@ -141,12 +180,12 @@ export const getStaticProps: GetServerSideProps = async () => {
         members: episode.members,
         publishedAt: format(
             parseISO(episode.published_at),
-            'd MMM yy', {
-            locale: ptBR
-        }),
+            'd MMM yy',
+            { locale: ptBR }
+        ),
         duration: Number(episode.file.duration),
         durationAsString: secondsToTimeString(Number(episode.file.duration)),
-        url: episode.file.url,
+        url: episode.file.url
     }))
 
     const latestEpisodes = episodes.slice(0, 2)
@@ -154,6 +193,6 @@ export const getStaticProps: GetServerSideProps = async () => {
 
     return {
         props: { latestEpisodes, allEpisodes },
-        revalidate: 60 * 60 * 8
+        revalidate: 60 * 60 * 8, // 8 hours
     }
 }

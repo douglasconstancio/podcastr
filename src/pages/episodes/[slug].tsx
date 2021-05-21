@@ -1,14 +1,15 @@
-import { format, parseISO } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
 import { GetStaticPaths, GetStaticProps } from 'next'
+import { api } from '../../services/api'
+import { format, parseISO } from 'date-fns'
+import ptBR from 'date-fns/locale/pt-BR'
+import { secondsToTimeString } from '../../utils/secondsToTimeString'
 import Image from 'next/image'
 import Link from 'next/link'
-import { api } from '../../services/api'
-import { secondsToTimeString } from '../../utils/secondsToTimeString'
-
-import styles from './episode.module.scss'
-import { usePlayer } from '../../contexts/PlayerContext'
 import Head from 'next/head'
+
+import { Container } from '../../styles/episode-styles'
+
+import { usePlayer } from '../../contexts/PlayerContext'
 
 type Episode = {
     id: string
@@ -26,52 +27,49 @@ type EpisodeProps = {
     episode: Episode
 }
 
-export default function Episode({ episode }: EpisodeProps ) {
+export default function Episode({ episode }: EpisodeProps) {
     const { play } = usePlayer()
 
     return (
-        <div className={ styles.episode }>
+        <Container>
             <Head>
                 <title>{ episode.title } | Podcastr</title>
             </Head>
-            <div className={ styles.thumbnailContainer }>
-                <Link href='/'>
-                    <button>
+
+            <section>
+                <div className='thumbnailContainer'>
+                    <Link href='/'>
+                        <button type='button'>
                         <img src='/arrow-left.svg' alt='Voltar'/>
+                        </button>
+                    </Link>
+                    <Image
+                        width={ 700 }
+                        height={ 160 }
+                        src={ episode.thumbnail }
+                        objectFit='cover'
+                    />
+                    <button type='button' onClick={() => play(episode)}>
+                        <img src='/play.svg' alt='Tocar episódio'/>
                     </button>
-                </Link>
-                <Image
-                    width={ 700 }
-                    height={ 160 }
-                    src={ episode.thumbnail }
-                    objectFit='cover'
+                </div>
+
+                <header>
+                    <h1>{episode.title}</h1>
+                    <span>{episode.members}</span>
+                    <span>{episode.publishedAt}</span>
+                    <span>{episode.durationAsString}</span>
+                </header>
+
+                <div
+                    className='description'
+                    dangerouslySetInnerHTML={{ __html: episode.description}}
                 />
-                <button type='button' onClick={() => play(episode) }>
-                    <img src='/play.svg' alt='Tocar episódio'/>
-                </button>
-            </div>
-
-            <header>
-                <h1>{ episode.title }</h1>
-                <span>{ episode.members }</span>
-                <span>{ episode.publishedAt }</span>
-                <span>{ episode.durationAsString }</span>
-            </header>
-
-            <div
-                className={ styles.description }
-                dangerouslySetInnerHTML={{ __html: episode.description }}
-            />
-        </div>
+            </section>
+        </Container>
     )
 }
 
-/**
- * When Path is empty at the build time, the next does not episode in a static way
- * fallback: false -> if not generated from the 404 build
- * fallback: true -> load on the client side
- * fallback: blocking -> load the nodejs side
- */
 export const getStaticPaths: GetStaticPaths = async () => {
     const { data } = await api(
         '/episodes',
@@ -79,15 +77,10 @@ export const getStaticPaths: GetStaticPaths = async () => {
     )
 
     const paths = data.map(episode => {
-        return {
-            params: { slug: episode.id }
-        }
+        return { params: { slug: episode.id } }
     })
 
-    return {
-        paths,
-        fallback: 'blocking'
-    }
+    return { paths, fallback: 'blocking' }
 }
 
 export const getStaticProps: GetStaticProps = async (ctx) => {
@@ -103,7 +96,8 @@ export const getStaticProps: GetStaticProps = async (ctx) => {
         publishedAt: format(
             parseISO(data.published_at),
             'd MMM yy',
-            { locale: ptBR }),
+            { locale: ptBR }
+        ),
         duration: Number(data.file.duration),
         durationAsString: secondsToTimeString(Number(data.file.duration)),
         description: data.description,
