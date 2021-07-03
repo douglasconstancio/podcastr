@@ -97,8 +97,9 @@ O layout foi baseado no protótipo idealizado no [Figma](https://www.figma.com/f
 - Torná-lo responsivo
 - Melhorias visuais e de estado de alguns botões
 - PWA (Rodar off) - Utilizar e estudar o Next PWA
-- Theme dark
+- Dark Theme
 - Utilização do Electron e transformar em um app _desktop_
+- Alteração das cores
 
 ---
 
